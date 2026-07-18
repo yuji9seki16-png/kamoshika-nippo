@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>日報プロンプト — 発酵食堂カモシカ</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #fff;
+    color: #1a1a1a;
+    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    padding: 32px 20px 60px;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: #444;
+    margin-bottom: 20px;
+  }
+
+  /* ── 名前入力 ── */
+  .name-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding: 14px 16px;
+    background: #f9f9f9;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+  }
+
+  .name-row label {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1a1a;
+    white-space: nowrap;
+  }
+
+  .name-row input {
+    flex: 1;
+    font-size: 16px;
+    font-family: inherit;
+    padding: 8px 12px;
+    border: 1.5px solid #bbb;
+    border-radius: 4px;
+    color: #1a1a1a;
+    outline: none;
+  }
+
+  .name-row input:focus {
+    border-color: #c0392b;
+  }
+
+  .name-row input::placeholder {
+    color: #aaa;
+  }
+
+  .name-hint {
+    font-size: 13px;
+    color: #666;
+    white-space: nowrap;
+  }
+
+  /* ── タブ ── */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 0;
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 11px 8px;
+    font-size: 15px;
+    font-weight: 700;
+    border: 2px solid #ddd;
+    border-bottom: none;
+    background: #f5f5f5;
+    color: #666;
+    cursor: pointer;
+    border-radius: 6px 6px 0 0;
+    letter-spacing: 0.05em;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .tab-btn.active {
+    background: #fff;
+    color: #c0392b;
+    border-color: #c0392b;
+    border-bottom-color: #fff;
+    z-index: 1;
+  }
+
+  .tab-btn:hover:not(.active) {
+    background: #eee;
+    color: #333;
+  }
+
+  /* ── タブパネル ── */
+  .tab-panel {
+    display: none;
+    border: 2px solid #c0392b;
+    border-radius: 0 0 8px 8px;
+    padding: 24px 22px 28px;
+  }
+
+  .tab-panel.active {
+    display: block;
+  }
+
+  .how-to {
+    font-size: 13px;
+    color: #444;
+    background: #f9f9f9;
+    border-left: 3px solid #c0392b;
+    padding: 10px 14px;
+    margin-bottom: 20px;
+    line-height: 1.8;
+  }
+
+  .how-to strong { color: #c0392b; }
+
+  /* ── コピーボタン ── */
+  .copy-btn {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #fff;
+    background: #c0392b;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-bottom: 20px;
+    transition: background 0.15s;
+  }
+
+  .copy-btn:hover { background: #a93226; }
+  .copy-btn.done { background: #2c7a3a; }
+
+  /* ── プロンプト表示エリア ── */
+  .prompt-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #666;
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+  }
+
+  .prompt-box {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 16px 18px;
+    font-size: 13px;
+    color: #333;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 420px;
+    overflow-y: auto;
+  }
+
+  /* ── マニュアル ── */
+  .manual {
+    background: #fff8f7;
+    border: 2px solid #c0392b;
+    border-radius: 8px;
+    padding: 20px 22px 18px;
+    margin-bottom: 24px;
+  }
+
+  .manual-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #c0392b;
+    margin-bottom: 14px;
+    letter-spacing: 0.05em;
+  }
+
+  .manual-steps {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .manual-steps li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .step-num {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    background: #c0392b;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+  }
+
+  .step-body {
+    font-size: 14px;
+    color: #1a1a1a;
+    line-height: 1.7;
+  }
+
+  .step-body strong {
+    display: block;
+    font-size: 15px;
+  }
+
+  .step-note {
+    font-size: 13px;
+    color: #666;
+  }
+
+  .manual-note {
+    font-size: 13px;
+    color: #444;
+    border-top: 1px solid #f0d5d2;
+    padding-top: 12px;
+    line-height: 1.7;
+  }
+
+  @media print {
+    body { padding: 10mm; }
+    .copy-btn, .name-row { display: none; }
+    .tabs { display: none; }
+    .tab-panel { display: block; border: 0.5pt solid #ccc; margin-bottom: 20mm; }
+    @page { size: A4; margin: 15mm; }
+  }
+</style>
+</head>
+<body>
+
+<h1>日報プロンプト</h1>
+<p class="subtitle">発酵食堂カモシカ — 食堂・マルシェ・ラボ 共通</p>
+
+<div class="manual">
+  <div class="manual-title">📖 使い方</div>
+  <ol class="manual-steps">
+    <li>
+      <span class="step-num">1</span>
+      <span class="step-body"><strong>名前を入力する</strong><br>下の「送る人の名前」欄に自分の名前を入力してください。（例：直美、恵）</span>
+    </li>
+    <li>
+      <span class="step-num">2</span>
+      <span class="step-body"><strong>部門タブを選ぶ</strong><br>今日の担当に合わせて「食堂」「マルシェ」「ラボ」のどれかを選んでください。</span>
+    </li>
+    <li>
+      <span class="step-num">3</span>
+      <span class="step-body"><strong>赤いボタンを押す</strong><br>「プロンプトをコピー」ボタンを押すと、クリップボードにコピーされます。</span>
+    </li>
+    <li>
+      <span class="step-num">4</span>
+      <span class="step-body"><strong>Claudeに貼り付ける</strong><br>claude.ai を開いて、テキストボックスに貼り付けます（⌘+V）。</span>
+    </li>
+    <li>
+      <span class="step-num">5</span>
+      <span class="step-body"><strong>ボイスメモの文字起こしを追加して送信</strong><br>貼り付けたテキストの一番下に、ボイスメモの文字起こしをそのまま貼って送信してください。<br><span class="step-note">※ 売上などの数字はざっくりで大丈夫。不明な箇所は [ ] で空欄になります。</span></span>
+    </li>
+    <li>
+      <span class="step-num">6</span>
+      <span class="step-body"><strong>出てきた日報をGmailに貼って送信</strong><br>Claudeが整形した日報テキストをコピーして、Gmailでグループ宛に送ってください。<br><span class="step-note">※ [ ] になっている数字は、送る前に手入力して埋めてください。</span></span>
+    </li>
+  </ol>
+  <p class="manual-note">このファイルはダブルクリックで開くだけで使えます。インターネット接続やアプリのインストールは不要です。</p>
+</div>
+
+<!-- 名前入力 -->
+<div class="name-row">
+  <label for="sender-name">送る人の名前</label>
+  <input type="text" id="sender-name" placeholder="例：直美、恵、○○" maxlength="20" oninput="updatePreviews()">
+  <span class="name-hint">← 署名に入ります</span>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('shokudo', this)">食 堂</button>
+  <button class="tab-btn" onclick="switchTab('marche', this)">マルシェ</button>
+  <button class="tab-btn" onclick="switchTab('labo', this)">ラ ボ</button>
+</div>
+
+<!-- ── 食堂 ── -->
+<div class="tab-panel active" id="panel-shokudo">
+  <div class="how-to">
+    <strong>使い方：</strong>①上で名前を入力　②コピーボタンを押す　③Claudeに貼り付けてボイスメモの文字起こしを追加して送信<br>
+    数字（売上・予約人数）は後から直接書き換えてOKです。
+  </div>
+  <button class="copy-btn" id="btn-shokudo" onclick="copyPrompt('shokudo')">
+    📋 食堂プロンプトをコピー
+  </button>
+  <div class="prompt-label">プロンプト内容（確認用）</div>
+  <div class="prompt-box" id="prompt-shokudo"></div>
+</div>
+
+<!-- ── マルシェ ── -->
+<div class="tab-panel" id="panel-marche">
+  <div class="how-to">
+    <strong>使い方：</strong>①上で名前を入力　②コピーボタンを押す　③Claudeに貼り付けてボイスメモの文字起こしを追加して送信<br>
+    売上数字・出荷リストは後から書き加えてもOKです。
+  </div>
+  <button class="copy-btn" id="btn-marche" onclick="copyPrompt('marche')">
+    📋 マルシェプロンプトをコピー
+  </button>
+  <div class="prompt-label">プロンプト内容（確認用）</div>
+  <div class="prompt-box" id="prompt-marche"></div>
+</div>
+
+<!-- ── ラボ ── -->
+<div class="tab-panel" id="panel-labo">
+  <div class="how-to">
+    <strong>使い方：</strong>①上で名前を入力　②コピーボタンを押す　③Claudeに貼り付けてボイスメモの文字起こしを追加して送信<br>
+    製造時間・個数の数字は後から書き加えてもOKです。
+  </div>
+  <button class="copy-btn" id="btn-labo" onclick="copyPrompt('labo')">
+    📋 ラボプロンプトをコピー
+  </button>
+  <div class="prompt-label">プロンプト内容（確認用）</div>
+  <div class="prompt-box" id="prompt-labo"></div>
+</div>
+
+<script>
+  // 各部門のプロンプトテンプレート（{NAME} を署名に差し込む）
+  const TEMPLATES = {
+    shokudo: `以下は今日の食堂の業務メモ（ボイスメモの文字起こし）です。
+これをもとに、食堂日報を書いてください。
+
+【出力ルール】
+- 書き出しは「お疲れ様です。」
+- 売上金額や翌日の予約人数など、メモに出てこない数字は [ ] で空欄にする
+- ボイスメモの言葉をそのまま使わず、簡潔に整理する
+- 柔らかい文体で、具体的に・箇条書きを活用する
+- 最後は「{NAME}」の署名で締める
+- プレーンテキストで出力（HTMLタグなし）
+- フッター（-- 以降）は不要
+
+【日報の構成】
+1. 今日のスタッフへの挨拶・労い（1〜2文）
+2. 売上（金額 [ ]、担当スタッフ名）
+3. 今日の様子（客層・混み具合・動向）
+4. 業務報告（仕込み / 発注 / 設備や環境の問題 / 商品の状態など、あったことを記載）
+5. 明日の情報（担当スタッフ / 予約状況 [ ] / 全体会の有無）
+
+【今日の業務メモ】
+↓ここにボイスメモの文字起こしを貼ってください↓`,
+
+    marche: `以下は今日のマルシェの業務メモ（ボイスメモの文字起こし）です。
+これをもとに、マルシェ日報を書いてください。
+
+【出力ルール】
+- 書き出しは「お疲れ様です。」
+- 売上数字など、メモに出てこない数字は [ ] で空欄にする
+- レジ金誤差があれば売上の項目に併記する
+- ボイスメモの言葉をそのまま使わず、簡潔に整理する
+- 柔らかい文体で、具体的に・箇条書きを活用する
+- 最後は「{NAME}」の署名で締める
+- プレーンテキストで出力（HTMLタグなし）
+- フッター（-- 以降）は不要
+
+【日報の構成】
+1. 今日の売上（店頭 [ ] / 通販BASE [ ] / 楽天 [ ] / 卸 [ ]）
+2. 今日の対応スタッフ
+3. 店頭の様子（客層・売れ筋・特記事項）
+4. トラブル・設備問題（あった場合のみ）
+5. 翌日出荷予定リスト（メモにあれば記載、なければ省略）
+6. 申し送り・引き継ぎ
+7. 明日の動き方・スケジュール
+
+【今日の業務メモ】
+↓ここにボイスメモの文字起こしを貼ってください↓`,
+
+    labo: `以下は今日のラボの業務メモ（ボイスメモの文字起こし）です。
+これをもとに、ラボ日報を書いてください。
+
+【出力ルール】
+- 書き出しは「お疲れ様です。」
+- 製造時間・個数など、メモに出てこない数字は [ ] で空欄にする
+- ボイスメモの言葉をそのまま使わず、簡潔に整理する
+- 柔らかい文体で、具体的に・箇条書きを活用する
+- 最後は「{NAME}」の署名で締める
+- プレーンテキストで出力（HTMLタグなし）
+- フッター（-- 以降）は不要
+
+【日報の構成】
+1. 今日の作業内容
+   （製品名 / 担当者 / 予定時間 [ ] → 実績 [ ] / 個数 [ ]）
+2. 各作業の詳細報告（課題・改善点・気づき・特記事項）
+3. 明日への申し送り
+   - 確認が必要なこと
+   - やること・タスク
+   - 備品・材料の補充
+
+【今日の業務メモ】
+↓ここにボイスメモの文字起こしを貼ってください↓`
+  };
+
+  function getName() {
+    const v = document.getElementById('sender-name').value.trim();
+    return v || '（名前未入力）';
+  }
+
+  function buildPrompt(key) {
+    return TEMPLATES[key].replace('{NAME}', getName());
+  }
+
+  function updatePreviews() {
+    ['shokudo', 'marche', 'labo'].forEach(key => {
+      document.getElementById('prompt-' + key).textContent = buildPrompt(key);
+    });
+  }
+
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+  }
+
+  function copyPrompt(name) {
+    const text = buildPrompt(name);
+    const btn = document.getElementById('btn-' + name);
+    const origText = btn.textContent;
+
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = '✓ コピーしました！';
+      btn.classList.add('done');
+      setTimeout(() => {
+        btn.textContent = origText;
+        btn.classList.remove('done');
+      }, 2500);
+    }).catch(() => {
+      // フォールバック（clipboard API 未対応環境）
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      btn.textContent = '✓ コピーしました！';
+      btn.classList.add('done');
+      setTimeout(() => {
+        btn.textContent = origText;
+        btn.classList.remove('done');
+      }, 2500);
+    });
+  }
+
+  // 初期描画
+  updatePreviews();
+</script>
+
+</body>
+</html>
